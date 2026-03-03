@@ -24,11 +24,21 @@
         textarea, input, select { width: 100%; padding: 10px; margin-top: 5px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; font-family: monospace; font-size: 1rem; }
         .row { display: flex; gap: 10px; }
         .row > div { flex: 1; }
-        button { width: 100%; padding: 12px; margin-top: 15px; border: none; border-radius: 6px; font-size: 1rem; font-weight: bold; color: white; cursor: pointer; }
+        
+        button { width: 100%; padding: 12px; margin-top: 15px; border: none; border-radius: 6px; font-size: 1rem; font-weight: bold; color: white; cursor: pointer; transition: 0.3s; }
         .btn-blue { background: var(--primary); }
         .btn-green { background: var(--success); }
         .btn-yellow { background: var(--warning); color: #333; }
-        .hardware-unsupported { display: none; text-align: center; color: var(--danger); font-weight: bold; margin-bottom: 15px;}
+        
+        /* NOVO: Estilo claro para botões desabilitados */
+        button:disabled {
+            background: #e0e0e0 !important;
+            color: #888888 !important;
+            cursor: not-allowed;
+            border: 1px dashed #aaaaaa;
+        }
+
+        .hardware-unsupported { display: none; text-align: center; background: #ffeeba; color: #856404; padding: 10px; border-radius: 6px; border: 1px solid #ffe8a1; font-weight: bold; margin-top: 20px; font-size: 0.9rem;}
         .badge { display: inline-block; background: #28a745; color: white; font-size: 0.7rem; padding: 3px 6px; border-radius: 4px; vertical-align: middle; margin-left: 5px; }
     </style>
 </head>
@@ -37,9 +47,6 @@
 <div class="container" id="app">
     <h2>NFC Web App <span class="badge">Offline & Seguro</span></h2>
     
-    <div id="unsupported" class="hardware-unsupported">
-        ⚠️ O Hardware NFC não está disponível.<br>Abra no Chrome de um celular Android.
-    </div>
     <div id="status" class="status-bar">Pronto e operando offline.</div>
 
     <label>Texto Original:</label>
@@ -68,19 +75,16 @@
     <label>Texto Criptografado (Memória da Tag):</label>
     <textarea id="txt_cripto" rows="4" placeholder="Resultado criptografado irá aqui..."></textarea>
 
+    <div id="unsupported" class="hardware-unsupported">
+        ⚠️ Bloqueado: A leitura/gravação NFC requer o Google Chrome em um Android e conexão HTTPS.
+    </div>
+
     <button class="btn-green" id="btn_gravar" onclick="gravarTag()">Gravar na Tag NFC</button>
     <button class="btn-blue" id="btn_ler" onclick="lerTag()" style="margin-top: 10px;">Ler Tag NFC</button>
 </div>
 
 <script>
-    // Impede a criação de cookies acidentais pelo próprio script
     document.cookie = "teste=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-
-    if (!("NDEFReader" in window)) {
-        document.getElementById("unsupported").style.display = "block";
-        document.getElementById("btn_gravar").disabled = true;
-        document.getElementById("btn_ler").disabled = true;
-    }
 
     function atualizarStatus(mensagem, tipo = "") {
         const statusEl = document.getElementById("status");
@@ -91,7 +95,22 @@
         else if (tipo === "warning") statusEl.classList.add("status-warning");
     }
 
-    // --- ALGORITMOS SIMPLES (Síncronos) ---
+    // NOVO: Lógica de bloqueio com alteração de texto nos botões
+    if (!("NDEFReader" in window)) {
+        document.getElementById("unsupported").style.display = "block";
+        
+        let btnGravar = document.getElementById("btn_gravar");
+        let btnLer = document.getElementById("btn_ler");
+        
+        btnGravar.disabled = true;
+        btnLer.disabled = true;
+        
+        btnGravar.innerText = "Gravação Indisponível";
+        btnLer.innerText = "Leitura Indisponível";
+        
+        atualizarStatus("Modo Criptografia: Apenas Texto (NFC Incompatível)", "warning");
+    }
+
     function vigenere(texto, chave, descriptografar = false) {
         if (!chave) return texto;
         let resultado = "";
@@ -125,48 +144,35 @@
         }
     }
 
-    // --- AES-256 NATIVO DA WEB CRYPTO API (Assíncrono & 100% Offline) ---
     async function aesNativo(texto, senha, descriptografar = false) {
         const enc = new TextEncoder();
-        
-        // Deriva uma chave de 256 bits a partir da senha digitada usando SHA-256
         const hash = await crypto.subtle.digest('SHA-256', enc.encode(senha));
         const key = await crypto.subtle.importKey('raw', hash, {name: 'AES-GCM'}, false, ['encrypt', 'decrypt']);
 
         if (descriptografar) {
             try {
-                // Decodifica Base64 de volta para Array de Bytes
                 const dec = atob(texto);
                 const combined = new Uint8Array(dec.length);
                 for(let i=0; i<dec.length; i++) combined[i] = dec.charCodeAt(i);
-
-                // Separa o Vetor de Inicialização (IV) e os dados encriptados
                 const iv = combined.slice(0, 12);
                 const ciphertext = combined.slice(12);
-
                 const decrypted = await crypto.subtle.decrypt({name: 'AES-GCM', iv: iv}, key, ciphertext);
                 return new TextDecoder().decode(decrypted);
             } catch (e) {
                 return "Erro AES: Senha incorreta ou dados violados.";
             }
         } else {
-            // Gera um Vetor de Inicialização (IV) aleatório para segurança extra
             const iv = crypto.getRandomValues(new Uint8Array(12));
             const ciphertext = await crypto.subtle.encrypt({name: 'AES-GCM', iv: iv}, key, enc.encode(texto));
-
-            // Junta o IV e os dados para podermos descriptografar depois
             const combined = new Uint8Array(iv.length + ciphertext.byteLength);
             combined.set(iv, 0);
             combined.set(new Uint8Array(ciphertext), iv.length);
-
-            // Converte para Base64 para exibir na tela e gravar no NFC
             let bin = "";
             for (let i = 0; i < combined.byteLength; i++) bin += String.fromCharCode(combined[i]);
             return btoa(bin);
         }
     }
 
-    // --- AÇÕES DA TELA ---
     async function criptografar() {
         let texto = document.getElementById("txt_original").value.trim();
         let senha = document.getElementById("txt_senha").value.trim();
@@ -201,7 +207,6 @@
         else atualizarStatus("Texto descriptografado com sucesso.", "success");
     }
 
-    // --- AÇÕES NATIVAS NFC (WEB API) ---
     async function gravarTag() {
         let texto = document.getElementById("txt_cripto").value.trim();
         if (!texto) return alert("Não há texto criptografado para gravar.");
