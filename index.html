@@ -6,121 +6,274 @@
     <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate, max-age=0">
     <meta http-equiv="Pragma" content="no-cache">
     <meta name="referrer" content="no-referrer">
-    <title>NFC Web Security - Zero Tracking</title>
+    <title>NFC Security Core | Advanced</title>
     
     <style>
         :root {
-            --primary: #007bff; --success: #28a745; --danger: #dc3545; --warning: #ffc107;
-            --bg: #f4f7f6; --card-bg: #ffffff; --text: #333333;
-        }
-        body { font-family: 'Segoe UI', Tahoma, sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 15px; }
-        .container { max-width: 500px; margin: 0 auto; background: var(--card-bg); padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        h2 { text-align: center; font-size: 1.5rem; margin-top: 0; }
-        .status-bar { padding: 10px; border-radius: 8px; text-align: center; font-weight: bold; margin-bottom: 20px; background: #e2e3e5; color: #383d41; }
-        .status-success { background: #d4edda; color: #155724; }
-        .status-error { background: #f8d7da; color: #721c24; }
-        .status-warning { background: #fff3cd; color: #856404; }
-        label { font-weight: bold; display: block; margin-top: 15px; font-size: 0.9rem; }
-        textarea, input, select { width: 100%; padding: 10px; margin-top: 5px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; font-family: monospace; font-size: 1rem; }
-        .row { display: flex; gap: 10px; }
-        .row > div { flex: 1; }
-        
-        button { width: 100%; padding: 12px; margin-top: 15px; border: none; border-radius: 6px; font-size: 1rem; font-weight: bold; color: white; cursor: pointer; transition: 0.3s; }
-        .btn-blue { background: var(--primary); }
-        .btn-green { background: var(--success); }
-        .btn-yellow { background: var(--warning); color: #333; }
-        
-        /* NOVO: Estilo claro para botões desabilitados */
-        button:disabled {
-            background: #e0e0e0 !important;
-            color: #888888 !important;
-            cursor: not-allowed;
-            border: 1px dashed #aaaaaa;
+            --primary: #2563eb;
+            --primary-hover: #1d4ed8;
+            --success: #10b981;
+            --success-hover: #059669;
+            --warning: #f59e0b;
+            --warning-hover: #d97706;
+            --danger: #ef4444;
+            --bg-body: #f3f4f6;
+            --bg-card: #ffffff;
+            --text-main: #1f2937;
+            --text-muted: #6b7280;
+            --border-light: #e5e7eb;
+            --input-focus: #bfdbfe;
         }
 
-        .hardware-unsupported { display: none; text-align: center; background: #ffeeba; color: #856404; padding: 10px; border-radius: 6px; border: 1px solid #ffe8a1; font-weight: bold; margin-top: 20px; font-size: 0.9rem;}
-        .badge { display: inline-block; background: #28a745; color: white; font-size: 0.7rem; padding: 3px 6px; border-radius: 4px; vertical-align: middle; margin-left: 5px; }
+        * { box-sizing: border-box; }
+
+        body { 
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
+            background-color: var(--bg-body); 
+            color: var(--text-main); 
+            margin: 0; 
+            padding: 20px 15px; 
+            display: flex;
+            justify-content: center;
+        }
+
+        .container { 
+            width: 100%;
+            max-width: 540px; 
+            background: var(--bg-card); 
+            padding: 30px; 
+            border-radius: 16px; 
+            box-shadow: 0 10px 25px rgba(0,0,0,0.05); 
+        }
+
+        .header { text-align: center; margin-bottom: 25px; }
+        .header h2 { margin: 0; font-size: 1.6rem; font-weight: 700; color: #111827; }
+        .badge { display: inline-block; background: var(--text-main); color: white; font-size: 0.75rem; padding: 4px 8px; border-radius: 6px; vertical-align: middle; margin-left: 8px; letter-spacing: 0.5px;}
+        
+        .status-bar { padding: 12px; border-radius: 8px; text-align: center; font-weight: 600; margin-bottom: 25px; font-size: 0.95rem; transition: all 0.3s ease; }
+        .status-default { background: #f3f4f6; color: #4b5563; border: 1px solid #e5e7eb; }
+        .status-success { background: #d1fae5; color: #065f46; border: 1px solid #a7f3d0; }
+        .status-error { background: #fee2e2; color: #991b1b; border: 1px solid #fecaca; }
+        .status-warning { background: #fef3c7; color: #92400e; border: 1px solid #fde68a; }
+
+        .form-group { margin-bottom: 16px; }
+        label { font-weight: 600; display: block; margin-bottom: 6px; font-size: 0.85rem; color: #374151; }
+        
+        textarea, input, select { 
+            width: 100%; 
+            padding: 12px; 
+            border: 1px solid var(--border-light); 
+            border-radius: 8px; 
+            font-family: 'JetBrains Mono', 'Consolas', monospace; 
+            font-size: 0.95rem; 
+            background-color: #f9fafb;
+            transition: all 0.2s;
+            color: #1f2937;
+        }
+        textarea:focus, input:focus, select:focus {
+            outline: none;
+            border-color: var(--primary);
+            background-color: #ffffff;
+            box-shadow: 0 0 0 3px var(--input-focus);
+        }
+
+        /* NOVO: Layout inferior das caixas de texto (Copiar + Contador) */
+        .textarea-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 6px;
+        }
+        .char-counter { font-size: 0.75rem; color: var(--text-muted); font-weight: 500; }
+        .copy-btn {
+            background: none; border: none; padding: 4px 8px; margin: 0;
+            color: var(--primary); font-size: 0.8rem; font-weight: 600;
+            cursor: pointer; border-radius: 6px; display: flex; align-items: center; gap: 5px;
+            transition: background 0.2s; width: auto;
+        }
+        .copy-btn:hover { background: #e0e7ff; transform: none; box-shadow: none;}
+        .copy-btn svg { width: 14px; height: 14px; stroke: currentColor; stroke-width: 2; fill: none; }
+
+        .row { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        
+        .password-wrapper { position: relative; display: flex; align-items: center; }
+        .password-wrapper input { padding-right: 45px; }
+        .toggle-btn { 
+            position: absolute; right: 10px; background: none; border: none; padding: 5px; 
+            cursor: pointer; font-size: 1.1rem; color: var(--text-muted); width: auto; margin: 0;
+        }
+        .toggle-btn:hover { color: var(--primary); transform: none; box-shadow: none;}
+
+        .btn-group { display: flex; gap: 10px; margin-top: 10px; margin-bottom: 25px; }
+        button { 
+            width: 100%; padding: 12px 16px; border: none; border-radius: 8px; 
+            font-size: 0.95rem; font-weight: 600; color: white; 
+            cursor: pointer; transition: all 0.2s ease;
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+        }
+        button:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        button:active { transform: translateY(0); }
+        
+        .btn-blue { background: var(--primary); }
+        .btn-blue:hover { background: var(--primary-hover); }
+        .btn-yellow { background: var(--warning); color: #fff; }
+        .btn-yellow:hover { background: var(--warning-hover); }
+        .btn-green { background: var(--success); }
+        .btn-green:hover { background: var(--success-hover); }
+        button:disabled { background: #e5e7eb !important; color: #9ca3af !important; cursor: not-allowed; box-shadow: none; transform: none; }
+
+        .hardware-section { margin-top: 30px; padding-top: 20px; border-top: 2px dashed var(--border-light); }
+        .hardware-unsupported { display: none; text-align: center; background: #fef3c7; color: #92400e; padding: 12px; border-radius: 8px; font-weight: 600; margin-bottom: 15px; font-size: 0.85rem;}
     </style>
 </head>
 <body>
 
 <div class="container" id="app">
-    <h2>NFC Web App <span class="badge">Offline & Seguro</span></h2>
+    <div class="header">
+        <h2>NFC Security Core <span class="badge">PRO</span></h2>
+    </div>
     
-    <div id="status" class="status-bar">Pronto e operando offline.</div>
+    <div id="status" class="status-bar status-default">Sistemas operacionais. Aguardando comando.</div>
 
-    <label>Texto Original:</label>
-    <textarea id="txt_original" rows="3" placeholder="Digite o texto aqui..."></textarea>
+    <div class="form-group">
+        <label>Texto Original (Descriptografado)</label>
+        <textarea id="txt_original" rows="3" placeholder="Insira o texto legível aqui..."></textarea>
+        
+        <div class="textarea-footer">
+            <button class="copy-btn" onclick="copiarTexto('txt_original', this)" title="Copiar texto">
+                <svg viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                Copiar
+            </button>
+            <div id="count_original" class="char-counter">0 chars</div>
+        </div>
+    </div>
 
     <div class="row">
-        <div>
-            <label>Senha:</label>
-            <input type="password" id="txt_senha" placeholder="Sua chave">
+        <div class="form-group">
+            <label>Palavra-chave</label>
+            <div class="password-wrapper">
+                <input type="password" id="txt_senha" placeholder="Sua senha">
+                <button type="button" class="toggle-btn" onclick="togglePassword()" id="btn_toggle" title="Mostrar/Ocultar Senha">👁️</button>
+            </div>
         </div>
-        <div>
-            <label>Algoritmo:</label>
+        <div class="form-group">
+            <label>Motor Criptográfico</label>
             <select id="combo_metodo">
-                <option value="vigenere">Vigenère (1:1)</option>
+                <option value="vigenere">Vigenère</option>
                 <option value="xor">XOR + Base64</option>
-                <option value="aes" selected>AES-256 (Nativo WebCrypto)</option>
+                <option value="aes-gcm" selected>AES-GCM 256-bit</option>
+                <option value="aes-ctr">AES-CTR 256-bit</option>
+                <option value="aes-cbc">AES-CBC 256-bit</option>
             </select>
         </div>
     </div>
 
-    <div class="row">
+    <div class="btn-group">
         <button class="btn-blue" onclick="criptografar()">↓ Criptografar</button>
         <button class="btn-yellow" onclick="descriptografar()">↑ Descriptografar</button>
     </div>
 
-    <label>Texto Criptografado (Memória da Tag):</label>
-    <textarea id="txt_cripto" rows="4" placeholder="Resultado criptografado irá aqui..."></textarea>
-
-    <div id="unsupported" class="hardware-unsupported">
-        ⚠️ Bloqueado: A leitura/gravação NFC requer o Google Chrome em um Android e conexão HTTPS.
+    <div class="form-group">
+        <label>Payload Seguro (Memória da Tag)</label>
+        <textarea id="txt_cripto" rows="4" placeholder="Resultado encriptado..."></textarea>
+        
+        <div class="textarea-footer">
+            <button class="copy-btn" onclick="copiarTexto('txt_cripto', this)" title="Copiar texto">
+                <svg viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                Copiar
+            </button>
+            <div id="count_cripto" class="char-counter">0 chars</div>
+        </div>
     </div>
 
-    <button class="btn-green" id="btn_gravar" onclick="gravarTag()">Gravar na Tag NFC</button>
-    <button class="btn-blue" id="btn_ler" onclick="lerTag()" style="margin-top: 10px;">Ler Tag NFC</button>
+    <div class="hardware-section">
+        <div id="unsupported" class="hardware-unsupported">
+            ⚠️ Hardware NFC inativo. Requer Chrome no Android + conexão HTTPS.
+        </div>
+        
+        <div class="row">
+            <button class="btn-green" id="btn_gravar" onclick="gravarTag()">Gravar Tag NFC</button>
+            <button class="btn-blue" id="btn_ler" onclick="lerTag()">Ler Tag NFC</button>
+        </div>
+    </div>
 </div>
 
 <script>
     document.cookie = "teste=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
 
-    function atualizarStatus(mensagem, tipo = "") {
+    // NOVO: Função para copiar texto para a área de transferência
+    async function copiarTexto(idElemento, btnElemento) {
+        const campoTexto = document.getElementById(idElemento);
+        const texto = campoTexto.value;
+        
+        if (!texto) {
+            atualizarStatus("Não há texto para copiar.", "warning");
+            return;
+        }
+
+        try {
+            // Requer HTTPS, o que já está alinhado com a necessidade do NFC
+            await navigator.clipboard.writeText(texto);
+            
+            // Feedback visual no botão
+            const conteudoOriginal = btnElemento.innerHTML;
+            btnElemento.innerHTML = `<svg viewBox="0 0 24 24" style="stroke: #10b981;"><polyline points="20 6 9 17 4 12"></polyline></svg> Copiado!`;
+            btnElemento.style.color = "#10b981";
+            
+            setTimeout(() => {
+                btnElemento.innerHTML = conteudoOriginal;
+                btnElemento.style.color = "";
+            }, 2000);
+            
+        } catch (err) {
+            atualizarStatus("Falha ao copiar texto. Acesso negado.", "error");
+        }
+    }
+
+    function togglePassword() {
+        const input = document.getElementById("txt_senha");
+        const btn = document.getElementById("btn_toggle");
+        if (input.type === "password") {
+            input.type = "text";
+            btn.innerText = "🙈"; 
+        } else {
+            input.type = "password";
+            btn.innerText = "👁️";
+        }
+    }
+
+    function atualizarStatus(mensagem, tipo = "default") {
         const statusEl = document.getElementById("status");
         statusEl.textContent = mensagem;
-        statusEl.className = "status-bar";
+        statusEl.className = "status-bar"; 
         if (tipo === "success") statusEl.classList.add("status-success");
         else if (tipo === "error") statusEl.classList.add("status-error");
         else if (tipo === "warning") statusEl.classList.add("status-warning");
+        else statusEl.classList.add("status-default");
     }
 
-    // NOVO: Lógica de bloqueio com alteração de texto nos botões
+    function atualizarContadores() {
+        document.getElementById("count_original").innerText = document.getElementById("txt_original").value.length + " chars";
+        document.getElementById("count_cripto").innerText = document.getElementById("txt_cripto").value.length + " chars";
+    }
+    document.getElementById("txt_original").addEventListener("input", atualizarContadores);
+    document.getElementById("txt_cripto").addEventListener("input", atualizarContadores);
+
     if (!("NDEFReader" in window)) {
         document.getElementById("unsupported").style.display = "block";
-        
-        let btnGravar = document.getElementById("btn_gravar");
-        let btnLer = document.getElementById("btn_ler");
-        
-        btnGravar.disabled = true;
-        btnLer.disabled = true;
-        
-        btnGravar.innerText = "Gravação Indisponível";
-        btnLer.innerText = "Leitura Indisponível";
-        
-        atualizarStatus("Modo Criptografia: Apenas Texto (NFC Incompatível)", "warning");
+        document.getElementById("btn_gravar").disabled = true;
+        document.getElementById("btn_ler").disabled = true;
+        atualizarStatus("Modo Lógico Habilitado. Hardware NFC Offline.", "warning");
     }
 
     function vigenere(texto, chave, descriptografar = false) {
         if (!chave) return texto;
-        let resultado = "";
-        let indexChave = 0;
+        let resultado = "", indexChave = 0;
         for (let i = 0; i < texto.length; i++) {
             let charCode = texto.charCodeAt(i);
             if (charCode >= 32 && charCode <= 126) {
                 let shift = chave.charCodeAt(indexChave % chave.length) % 95;
-                if (descriptografar) resultado += String.fromCharCode(((charCode - 32 - shift + 95) % 95) + 32);
-                else resultado += String.fromCharCode(((charCode - 32 + shift) % 95) + 32);
+                resultado += String.fromCharCode(descriptografar ? ((charCode - 32 - shift + 95) % 95) + 32 : ((charCode - 32 + shift) % 95) + 32);
                 indexChave++;
             } else { resultado += texto.charAt(i); }
         }
@@ -131,42 +284,56 @@
         if (!chave) chave = "padrao";
         if (descriptografar) {
             try {
-                let decodificado = atob(texto);
-                let resultado = "";
+                let decodificado = atob(texto), resultado = "";
                 for (let i = 0; i < decodificado.length; i++) resultado += String.fromCharCode(decodificado.charCodeAt(i) ^ chave.charCodeAt(i % chave.length));
                 return decodeURIComponent(escape(resultado));
             } catch (e) { return "Erro: Base64 corrompido."; }
         } else {
-            let utf8texto = unescape(encodeURIComponent(texto));
-            let resultado = "";
+            let utf8texto = unescape(encodeURIComponent(texto)), resultado = "";
             for (let i = 0; i < utf8texto.length; i++) resultado += String.fromCharCode(utf8texto.charCodeAt(i) ^ chave.charCodeAt(i % chave.length));
             return btoa(resultado);
         }
     }
 
-    async function aesNativo(texto, senha, descriptografar = false) {
+    async function aesNativo(texto, senha, descriptografar = false, mode = 'aes-gcm') {
         const enc = new TextEncoder();
         const hash = await crypto.subtle.digest('SHA-256', enc.encode(senha));
-        const key = await crypto.subtle.importKey('raw', hash, {name: 'AES-GCM'}, false, ['encrypt', 'decrypt']);
+        let algName = mode.toUpperCase();
+        const key = await crypto.subtle.importKey('raw', hash, {name: algName}, false, ['encrypt', 'decrypt']);
+
+        let ivLength = (algName === 'AES-GCM') ? 12 : 16;
 
         if (descriptografar) {
             try {
                 const dec = atob(texto);
                 const combined = new Uint8Array(dec.length);
                 for(let i=0; i<dec.length; i++) combined[i] = dec.charCodeAt(i);
-                const iv = combined.slice(0, 12);
-                const ciphertext = combined.slice(12);
-                const decrypted = await crypto.subtle.decrypt({name: 'AES-GCM', iv: iv}, key, ciphertext);
+                
+                const iv = combined.slice(0, ivLength);
+                const ciphertext = combined.slice(ivLength);
+
+                let params = { name: algName };
+                if (algName === 'AES-CTR') { params.counter = iv; params.length = 64; }
+                else { params.iv = iv; }
+
+                const decrypted = await crypto.subtle.decrypt(params, key, ciphertext);
                 return new TextDecoder().decode(decrypted);
             } catch (e) {
-                return "Erro AES: Senha incorreta ou dados violados.";
+                return `Erro ${algName}: Falha de autenticidade ou chave incorreta.`;
             }
         } else {
-            const iv = crypto.getRandomValues(new Uint8Array(12));
-            const ciphertext = await crypto.subtle.encrypt({name: 'AES-GCM', iv: iv}, key, enc.encode(texto));
+            const iv = crypto.getRandomValues(new Uint8Array(ivLength));
+            
+            let params = { name: algName };
+            if (algName === 'AES-CTR') { params.counter = iv; params.length = 64; }
+            else { params.iv = iv; }
+
+            const ciphertext = await crypto.subtle.encrypt(params, key, enc.encode(texto));
+            
             const combined = new Uint8Array(iv.length + ciphertext.byteLength);
             combined.set(iv, 0);
             combined.set(new Uint8Array(ciphertext), iv.length);
+            
             let bin = "";
             for (let i = 0; i < combined.byteLength; i++) bin += String.fromCharCode(combined[i]);
             return btoa(bin);
@@ -183,10 +350,13 @@
         let resultado = "";
         if (metodo === "vigenere") resultado = vigenere(texto, senha, false);
         else if (metodo === "xor") resultado = xorBase64(texto, senha, false);
-        else if (metodo === "aes") resultado = await aesNativo(texto, senha, false);
+        else if (metodo.startsWith("aes")) resultado = await aesNativo(texto, senha, false, metodo);
 
         document.getElementById("txt_cripto").value = resultado;
-        atualizarStatus("Texto criptografado na tela. Seguro e sem rastros.", "success");
+        
+        const optText = document.getElementById("combo_metodo").options[document.getElementById("combo_metodo").selectedIndex].text;
+        atualizarStatus(`Payload gerado via ${optText}.`, "success");
+        atualizarContadores();
     }
 
     async function descriptografar() {
@@ -199,57 +369,47 @@
         let resultado = "";
         if (metodo === "vigenere") resultado = vigenere(textoCripto, senha, true);
         else if (metodo === "xor") resultado = xorBase64(textoCripto, senha, true);
-        else if (metodo === "aes") resultado = await aesNativo(textoCripto, senha, true);
+        else if (metodo.startsWith("aes")) resultado = await aesNativo(textoCripto, senha, true, metodo);
 
         document.getElementById("txt_original").value = resultado;
         
-        if(resultado.startsWith("Erro")) atualizarStatus("Falha na descriptografia.", "error");
-        else atualizarStatus("Texto descriptografado com sucesso.", "success");
+        if(resultado.startsWith("Erro")) atualizarStatus(resultado, "error");
+        else atualizarStatus("Payload descriptografado e verificado com sucesso.", "success");
+        atualizarContadores();
     }
 
     async function gravarTag() {
         let texto = document.getElementById("txt_cripto").value.trim();
         if (!texto) return alert("Não há texto criptografado para gravar.");
-
         try {
             const ndef = new NDEFReader();
-            atualizarStatus("Aproxime a tag NFC da traseira do celular...", "warning");
+            atualizarStatus("Aproxime a tag NFC do sensor...", "warning");
             await ndef.write(texto);
-            atualizarStatus("Gravado na Tag com sucesso!", "success");
-        } catch (error) {
-            atualizarStatus(`Erro ao gravar: ${error.message}`, "error");
-        }
+            atualizarStatus("Upload para Tag NFC concluído!", "success");
+        } catch (error) { atualizarStatus(`Falha de Hardware: ${error.message}`, "error"); }
     }
 
     async function lerTag() {
         try {
             const ndef = new NDEFReader();
             await ndef.scan();
-            atualizarStatus("Aproxime a tag NFC da traseira do celular...", "warning");
+            atualizarStatus("Aproxime a tag NFC do sensor...", "warning");
 
             ndef.onreading = event => {
-                const message = event.message;
-                for (const record of message.records) {
+                for (const record of event.message.records) {
                     if (record.recordType === "text") {
-                        const textDecoder = new TextDecoder(record.encoding);
-                        const textoLido = textDecoder.decode(record.data);
-                        
+                        const textoLido = new TextDecoder(record.encoding).decode(record.data);
                         document.getElementById("txt_cripto").value = textoLido;
                         document.getElementById("txt_original").value = ""; 
-                        atualizarStatus("Tag lida! Coloque a senha para descriptografar.", "success");
+                        atualizarStatus("Tag lida com sucesso. Requer descriptografia.", "success");
+                        atualizarContadores();
                         return;
                     }
                 }
-                atualizarStatus("Tag lida, mas não continha texto NDEF padrão.", "warning");
+                atualizarStatus("A tag não contém registros de texto NDEF suportados.", "warning");
             };
-            
-            ndef.onreadingerror = () => {
-                atualizarStatus("Erro de leitura. A tag não está formatada ou falhou.", "error");
-            };
-            
-        } catch (error) {
-            atualizarStatus(`Erro de permissão ou hardware: ${error.message}`, "error");
-        }
+            ndef.onreadingerror = () => { atualizarStatus("Corrupção de dados ou leitura interrompida.", "error"); };
+        } catch (error) { atualizarStatus(`Erro de I/O: ${error.message}`, "error"); }
     }
 </script>
 
