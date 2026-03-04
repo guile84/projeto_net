@@ -17,6 +17,7 @@
             --warning: #f59e0b;
             --warning-hover: #d97706;
             --danger: #ef4444;
+            --danger-hover: #dc2626;
             --bg-body: #f3f4f6;
             --bg-card: #ffffff;
             --text-main: #1f2937;
@@ -77,7 +78,6 @@
             box-shadow: 0 0 0 3px var(--input-focus);
         }
 
-        /* NOVO: Layout inferior das caixas de texto (Copiar + Contador) */
         .textarea-footer {
             display: flex;
             justify-content: space-between;
@@ -120,6 +120,9 @@
         .btn-yellow:hover { background: var(--warning-hover); }
         .btn-green { background: var(--success); }
         .btn-green:hover { background: var(--success-hover); }
+        .btn-red { background: var(--danger); margin-top: 15px;}
+        .btn-red:hover { background: var(--danger-hover); }
+        
         button:disabled { background: #e5e7eb !important; color: #9ca3af !important; cursor: not-allowed; box-shadow: none; transform: none; }
 
         .hardware-section { margin-top: 30px; padding-top: 20px; border-top: 2px dashed var(--border-light); }
@@ -195,13 +198,16 @@
             <button class="btn-green" id="btn_gravar" onclick="gravarTag()">Gravar Tag NFC</button>
             <button class="btn-blue" id="btn_ler" onclick="lerTag()">Ler Tag NFC</button>
         </div>
+        
+        <button class="btn-red" id="btn_travar" disabled title="Desativado por segurança no ambiente de desenvolvimento." onclick="travarTag()">
+            🔒 Travar Tag Permanente (Proteção Ativa)
+        </button>
     </div>
 </div>
 
 <script>
     document.cookie = "teste=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
 
-    // NOVO: Função para copiar texto para a área de transferência
     async function copiarTexto(idElemento, btnElemento) {
         const campoTexto = document.getElementById(idElemento);
         const texto = campoTexto.value;
@@ -212,10 +218,7 @@
         }
 
         try {
-            // Requer HTTPS, o que já está alinhado com a necessidade do NFC
             await navigator.clipboard.writeText(texto);
-            
-            // Feedback visual no botão
             const conteudoOriginal = btnElemento.innerHTML;
             btnElemento.innerHTML = `<svg viewBox="0 0 24 24" style="stroke: #10b981;"><polyline points="20 6 9 17 4 12"></polyline></svg> Copiado!`;
             btnElemento.style.color = "#10b981";
@@ -263,6 +266,9 @@
         document.getElementById("unsupported").style.display = "block";
         document.getElementById("btn_gravar").disabled = true;
         document.getElementById("btn_ler").disabled = true;
+        // O botão de travar já vem com 'disabled' direto no HTML por segurança, 
+        // mas reforçamos aqui caso a lógica mude no futuro.
+        document.getElementById("btn_travar").disabled = true; 
         atualizarStatus("Modo Lógico Habilitado. Hardware NFC Offline.", "warning");
     }
 
@@ -410,6 +416,25 @@
             };
             ndef.onreadingerror = () => { atualizarStatus("Corrupção de dados ou leitura interrompida.", "error"); };
         } catch (error) { atualizarStatus(`Erro de I/O: ${error.message}`, "error"); }
+    }
+
+    // --- FUNÇÃO PREPARADA PARA DESBLOQUEIO FUTURO ---
+    async function travarTag() {
+        /*
+        // Para ativar isso no futuro, remova o atributo 'disabled' do botão HTML e descomente este bloco.
+        const confirmacao = confirm("ATENÇÃO: Este processo é irreversível!\n\nA tag ficará como Somente Leitura para sempre e nunca mais poderá ser editada ou apagada. Deseja continuar?");
+        if (!confirmacao) return;
+
+        try {
+            const ndef = new NDEFReader();
+            atualizarStatus("Aproxime a tag NFC para BLOQUEIO PERMANENTE...", "warning");
+            await ndef.makeReadOnly();
+            atualizarStatus("Segurança Máxima: Tag travada com sucesso e agora é Somente Leitura.", "success");
+        } catch (error) { 
+            atualizarStatus(`Falha ao travar tag: ${error.message}`, "error"); 
+        }
+        */
+        alert("Proteção de Desenvolvimento: A função de bloqueio permanente está desativada para evitar a perda das tags de teste.");
     }
 </script>
 
