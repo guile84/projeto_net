@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0, viewport-fit=cover">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate, max-age=0">
     <meta http-equiv="Pragma" content="no-cache">
     <meta name="referrer" content="no-referrer">
@@ -10,40 +10,41 @@
     
     <style>
         :root {
-            --primary: #2563eb; --primary-hover: #1d4ed8; --success: #10b981; --success-hover: #059669;
-            --warning: #f59e0b; --warning-hover: #d97706; --danger: #ef4444; --danger-hover: #dc2626;
-            --bg-body: #f3f4f6; --bg-card: #ffffff; --text-main: #1f2937; --text-muted: #6b7280;
-            --border-light: #e5e7eb; --input-focus: #bfdbfe;
+            --primary: #2563eb;
+            --primary-hover: #1d4ed8;
+            --success: #10b981;
+            --success-hover: #059669;
+            --warning: #f59e0b;
+            --warning-hover: #d97706;
+            --danger: #ef4444;
+            --danger-hover: #dc2626;
+            --bg-body: #f3f4f6;
+            --bg-card: #ffffff;
+            --text-main: #1f2937;
+            --text-muted: #6b7280;
+            --border-light: #e5e7eb;
+            --input-focus: #bfdbfe;
         }
 
         * { box-sizing: border-box; }
 
         body { 
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
-            background-color: var(--bg-body); color: var(--text-main); margin: 0; 
-            padding: 20px 15px max(40px, env(safe-area-inset-bottom)); 
-            display: flex; justify-content: center; -webkit-tap-highlight-color: transparent; 
+            background-color: var(--bg-body); 
+            color: var(--text-main); 
+            margin: 0; 
+            padding: 20px 15px; 
+            display: flex;
+            justify-content: center;
         }
 
-        /* --- TELA DE LOGIN --- */
-        #auth-overlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(17, 24, 39, 0.95); backdrop-filter: blur(5px);
-            display: flex; justify-content: center; align-items: center; z-index: 9999;
-        }
-        .auth-box {
-            background: white; padding: 30px; border-radius: 12px; width: 90%; max-width: 400px;
-            text-align: center; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
-        }
-        .auth-box h3 { margin-top: 0; color: #111827; }
-        .auth-box input { margin-bottom: 15px; text-align: center; letter-spacing: 2px; }
-        .auth-error { color: var(--danger); font-size: 0.85rem; margin-bottom: 15px; display: none; font-weight: bold;}
-
-        /* --- APP PRINCIPAL --- */
         .container { 
-            width: 100%; max-width: 540px; background: var(--bg-card); 
-            padding: 30px; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.05);
-            display: none; /* Escondido por padrão */
+            width: 100%;
+            max-width: 540px; 
+            background: var(--bg-card); 
+            padding: 30px; 
+            border-radius: 16px; 
+            box-shadow: 0 10px 25px rgba(0,0,0,0.05); 
         }
 
         .header { text-align: center; margin-bottom: 25px; }
@@ -60,35 +61,59 @@
         label { font-weight: 600; display: block; margin-bottom: 6px; font-size: 0.85rem; color: #374151; }
         
         textarea, input, select { 
-            width: 100%; padding: 12px; border: 1px solid var(--border-light); 
-            border-radius: 8px; font-family: 'JetBrains Mono', 'Consolas', monospace; 
-            font-size: 16px; background-color: #f9fafb; transition: all 0.2s;
-            color: #1f2937; -webkit-appearance: none; 
+            width: 100%; 
+            padding: 12px; 
+            border: 1px solid var(--border-light); 
+            border-radius: 8px; 
+            font-family: 'JetBrains Mono', 'Consolas', monospace; 
+            font-size: 0.95rem; 
+            background-color: #f9fafb;
+            transition: all 0.2s;
+            color: #1f2937;
         }
-        textarea:focus, input:focus, select:focus { outline: none; border-color: var(--primary); background-color: #ffffff; box-shadow: 0 0 0 3px var(--input-focus); }
+        textarea:focus, input:focus, select:focus {
+            outline: none;
+            border-color: var(--primary);
+            background-color: #ffffff;
+            box-shadow: 0 0 0 3px var(--input-focus);
+        }
 
-        .textarea-footer { display: flex; justify-content: space-between; align-items: center; margin-top: 6px; }
+        .textarea-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 6px;
+        }
         .char-counter { font-size: 0.75rem; color: var(--text-muted); font-weight: 500; }
         .copy-btn {
             background: none; border: none; padding: 4px 8px; margin: 0;
             color: var(--primary); font-size: 0.8rem; font-weight: 600;
             cursor: pointer; border-radius: 6px; display: flex; align-items: center; gap: 5px;
-            transition: background 0.2s; width: auto; min-height: unset;
+            transition: background 0.2s; width: auto;
         }
         .copy-btn:hover { background: #e0e7ff; transform: none; box-shadow: none;}
         .copy-btn svg { width: 14px; height: 14px; stroke: currentColor; stroke-width: 2; fill: none; }
 
         .row { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        
         .password-wrapper { position: relative; display: flex; align-items: center; }
         .password-wrapper input { padding-right: 45px; }
-        .toggle-btn { position: absolute; right: 10px; background: none; border: none; padding: 5px; cursor: pointer; font-size: 1.1rem; color: var(--text-muted); width: auto; margin: 0; min-height: unset; }
+        .toggle-btn { 
+            position: absolute; right: 10px; background: none; border: none; padding: 5px; 
+            cursor: pointer; font-size: 1.1rem; color: var(--text-muted); width: auto; margin: 0;
+        }
+        .toggle-btn:hover { color: var(--primary); transform: none; box-shadow: none;}
 
         .btn-group { display: flex; gap: 10px; margin-top: 10px; margin-bottom: 25px; }
         button { 
-            width: 100%; padding: 12px 16px; border: none; border-radius: 8px; font-size: 0.95rem; font-weight: 600; color: white; cursor: pointer; transition: all 0.2s ease; display: flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px; user-select: none; 
+            width: 100%; padding: 12px 16px; border: none; border-radius: 8px; 
+            font-size: 0.95rem; font-weight: 600; color: white; 
+            cursor: pointer; transition: all 0.2s ease;
+            display: flex; align-items: center; justify-content: center; gap: 8px;
         }
         button:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
         button:active { transform: translateY(0); }
+        
         .btn-blue { background: var(--primary); }
         .btn-blue:hover { background: var(--primary-hover); }
         .btn-yellow { background: var(--warning); color: #fff; }
@@ -96,6 +121,8 @@
         .btn-green { background: var(--success); }
         .btn-green:hover { background: var(--success-hover); }
         .btn-red { background: var(--danger); margin-top: 15px;}
+        .btn-red:hover { background: var(--danger-hover); }
+        
         button:disabled { background: #e5e7eb !important; color: #9ca3af !important; cursor: not-allowed; box-shadow: none; transform: none; }
 
         .hardware-section { margin-top: 30px; padding-top: 20px; border-top: 2px dashed var(--border-light); }
@@ -104,25 +131,22 @@
 </head>
 <body>
 
-<div id="auth-overlay">
-    <div class="auth-box">
-        <h3>🔒 Acesso Restrito</h3>
-        <p style="font-size: 0.85rem; color: #666;">Insira a chave mestra para operar o hardware NFC.</p>
-        <div id="auth-err" class="auth-error">Senha Incorreta</div>
-        <input type="password" id="master-pwd" placeholder="••••••••" onkeypress="if(event.key === 'Enter') _0x1a2b()">
-        <button class="btn-blue" onclick="_0x1a2b()">Desbloquear Sistema</button>
-    </div>
-</div>
-
 <div class="container" id="app">
-    <div class="header"><h2>NFC Security Core <span class="badge">PRO</span></h2></div>
+    <div class="header">
+        <h2>NFC Security Core <span class="badge">PRO</span></h2>
+    </div>
+    
     <div id="status" class="status-bar status-default">Sistemas operacionais. Aguardando comando.</div>
 
     <div class="form-group">
         <label>Texto Original (Descriptografado)</label>
         <textarea id="txt_original" rows="3" placeholder="Insira o texto legível aqui..."></textarea>
+        
         <div class="textarea-footer">
-            <button class="copy-btn" onclick="copiarTexto('txt_original', this)" title="Copiar"><svg viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg> Copiar</button>
+            <button class="copy-btn" onclick="copiarTexto('txt_original', this)" title="Copiar texto">
+                <svg viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                Copiar
+            </button>
             <div id="count_original" class="char-counter">0 chars</div>
         </div>
     </div>
@@ -132,7 +156,7 @@
             <label>Palavra-chave</label>
             <div class="password-wrapper">
                 <input type="password" id="txt_senha" placeholder="Sua senha">
-                <button type="button" class="toggle-btn" onclick="togglePassword()" id="btn_toggle">👁️</button>
+                <button type="button" class="toggle-btn" onclick="togglePassword()" id="btn_toggle" title="Mostrar/Ocultar Senha">👁️</button>
             </div>
         </div>
         <div class="form-group">
@@ -155,55 +179,76 @@
     <div class="form-group">
         <label>Payload Seguro (Memória da Tag)</label>
         <textarea id="txt_cripto" rows="4" placeholder="Resultado encriptado..."></textarea>
+        
         <div class="textarea-footer">
-            <button class="copy-btn" onclick="copiarTexto('txt_cripto', this)" title="Copiar"><svg viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg> Copiar</button>
+            <button class="copy-btn" onclick="copiarTexto('txt_cripto', this)" title="Copiar texto">
+                <svg viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                Copiar
+            </button>
             <div id="count_cripto" class="char-counter">0 chars</div>
         </div>
     </div>
 
     <div class="hardware-section">
-        <div id="unsupported" class="hardware-unsupported">⚠️ Hardware NFC inativo. Requer Chrome no Android + conexão HTTPS.</div>
+        <div id="unsupported" class="hardware-unsupported">
+            ⚠️ Hardware NFC inativo. Requer Chrome no Android + conexão HTTPS.
+        </div>
+        
         <div class="row">
             <button class="btn-green" id="btn_gravar" onclick="gravarTag()">Gravar Tag NFC</button>
             <button class="btn-blue" id="btn_ler" onclick="lerTag()">Ler Tag NFC</button>
         </div>
-        <button class="btn-red" id="btn_travar" disabled title="Desativado por segurança." onclick="travarTag()">🔒 Travar Tag Permanente (Proteção Ativa)</button>
+        
+        <button class="btn-red" id="btn_travar" disabled title="Desativado por segurança no ambiente de desenvolvimento." onclick="travarTag()">
+            🔒 Travar Tag Permanente (Proteção Ativa)
+        </button>
     </div>
 </div>
 
 <script>
     document.cookie = "teste=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
 
-    // =========================================================================
-    // LÓGICA DE AUTENTICAÇÃO E CAPTURA DE URL (OFUSCADA PARA SEGURANÇA CLIENT-SIDE)
-    // O HASH ABAIXO É EXATAMENTE DA PALAVRA: admin123
-    // =========================================================================
-    const _0x4f2a=['value','getElementById','master-pwd','auth-err','display','none','app','auth-overlay','block','href','location','indexOf','Q;Ten','substring','txt_cripto','length'];(async function(){window['_0x1a2b']=async function(){let _0x1=document[_0x4f2a[1]](_0x4f2a[2])[_0x4f2a[0]];const _0x2=new TextEncoder()[_0x4f2a[12]? 'encode':'encode'](_0x1);const _0x3=await crypto['subtle']['digest']('SHA-256',_0x2);const _0x4=Array['from'](new Uint8Array(_0x3))['map'](_0x5=>_0x5['toString'](16)['padStart'](2,'0'))['join']('');if(_0x4==='240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9'){document[_0x4f2a[1]](_0x4f2a[3])['style'][_0x4f2a[4]]=_0x4f2a[5];document[_0x4f2a[1]](_0x4f2a[7])['style'][_0x4f2a[4]]=_0x4f2a[5];document[_0x4f2a[1]](_0x4f2a[6])['style'][_0x4f2a[4]]=_0x4f2a[8];let _0x6=window[_0x4f2a[10]][_0x4f2a[9]];let _0x7=_0x6[_0x4f2a[11]](_0x4f2a[12]);if(_0x7!==-1){let _0x8=_0x6[_0x4f2a[13]](_0x7+5);document[_0x4f2a[1]](_0x4f2a[14])[_0x4f2a[0]]=decodeURIComponent(_0x8);atualizarContadores();atualizarStatus("Payload importado via URL com sucesso.","success");}}else{document[_0x4f2a[1]](_0x4f2a[3])['style'][_0x4f2a[4]]=_0x4f2a[8];}}})();
-    // =========================================================================
-
     async function copiarTexto(idElemento, btnElemento) {
         const campoTexto = document.getElementById(idElemento);
         const texto = campoTexto.value;
-        if (!texto) { atualizarStatus("Não há texto para copiar.", "warning"); return; }
+        
+        if (!texto) {
+            atualizarStatus("Não há texto para copiar.", "warning");
+            return;
+        }
+
         try {
             await navigator.clipboard.writeText(texto);
             const conteudoOriginal = btnElemento.innerHTML;
             btnElemento.innerHTML = `<svg viewBox="0 0 24 24" style="stroke: #10b981;"><polyline points="20 6 9 17 4 12"></polyline></svg> Copiado!`;
             btnElemento.style.color = "#10b981";
-            setTimeout(() => { btnElemento.innerHTML = conteudoOriginal; btnElemento.style.color = ""; }, 2000);
-        } catch (err) { atualizarStatus("Falha ao copiar texto. Acesso negado.", "error"); }
+            
+            setTimeout(() => {
+                btnElemento.innerHTML = conteudoOriginal;
+                btnElemento.style.color = "";
+            }, 2000);
+            
+        } catch (err) {
+            atualizarStatus("Falha ao copiar texto. Acesso negado.", "error");
+        }
     }
 
     function togglePassword() {
         const input = document.getElementById("txt_senha");
         const btn = document.getElementById("btn_toggle");
-        if (input.type === "password") { input.type = "text"; btn.innerText = "🙈"; } 
-        else { input.type = "password"; btn.innerText = "👁️"; }
+        if (input.type === "password") {
+            input.type = "text";
+            btn.innerText = "🙈"; 
+        } else {
+            input.type = "password";
+            btn.innerText = "👁️";
+        }
     }
 
     function atualizarStatus(mensagem, tipo = "default") {
         const statusEl = document.getElementById("status");
-        statusEl.textContent = mensagem; statusEl.className = "status-bar"; 
+        statusEl.textContent = mensagem;
+        statusEl.className = "status-bar"; 
         if (tipo === "success") statusEl.classList.add("status-success");
         else if (tipo === "error") statusEl.classList.add("status-error");
         else if (tipo === "warning") statusEl.classList.add("status-warning");
@@ -221,7 +266,10 @@
         document.getElementById("unsupported").style.display = "block";
         document.getElementById("btn_gravar").disabled = true;
         document.getElementById("btn_ler").disabled = true;
+        // O botão de travar já vem com 'disabled' direto no HTML por segurança, 
+        // mas reforçamos aqui caso a lógica mude no futuro.
         document.getElementById("btn_travar").disabled = true; 
+        atualizarStatus("Modo Lógico Habilitado. Hardware NFC Offline.", "warning");
     }
 
     function vigenere(texto, chave, descriptografar = false) {
@@ -263,22 +311,37 @@
 
         if (descriptografar) {
             try {
-                const dec = atob(texto); const combined = new Uint8Array(dec.length);
+                const dec = atob(texto);
+                const combined = new Uint8Array(dec.length);
                 for(let i=0; i<dec.length; i++) combined[i] = dec.charCodeAt(i);
-                const iv = combined.slice(0, ivLength); const ciphertext = combined.slice(ivLength);
+                
+                const iv = combined.slice(0, ivLength);
+                const ciphertext = combined.slice(ivLength);
+
                 let params = { name: algName };
-                if (algName === 'AES-CTR') { params.counter = iv; params.length = 64; } else { params.iv = iv; }
+                if (algName === 'AES-CTR') { params.counter = iv; params.length = 64; }
+                else { params.iv = iv; }
+
                 const decrypted = await crypto.subtle.decrypt(params, key, ciphertext);
                 return new TextDecoder().decode(decrypted);
-            } catch (e) { return `Erro ${algName}: Falha de autenticidade ou chave incorreta.`; }
+            } catch (e) {
+                return `Erro ${algName}: Falha de autenticidade ou chave incorreta.`;
+            }
         } else {
             const iv = crypto.getRandomValues(new Uint8Array(ivLength));
+            
             let params = { name: algName };
-            if (algName === 'AES-CTR') { params.counter = iv; params.length = 64; } else { params.iv = iv; }
+            if (algName === 'AES-CTR') { params.counter = iv; params.length = 64; }
+            else { params.iv = iv; }
+
             const ciphertext = await crypto.subtle.encrypt(params, key, enc.encode(texto));
+            
             const combined = new Uint8Array(iv.length + ciphertext.byteLength);
-            combined.set(iv, 0); combined.set(new Uint8Array(ciphertext), iv.length);
-            let bin = ""; for (let i = 0; i < combined.byteLength; i++) bin += String.fromCharCode(combined[i]);
+            combined.set(iv, 0);
+            combined.set(new Uint8Array(ciphertext), iv.length);
+            
+            let bin = "";
+            for (let i = 0; i < combined.byteLength; i++) bin += String.fromCharCode(combined[i]);
             return btoa(bin);
         }
     }
@@ -287,12 +350,16 @@
         let texto = document.getElementById("txt_original").value.trim();
         let senha = document.getElementById("txt_senha").value.trim();
         let metodo = document.getElementById("combo_metodo").value;
+
         if (!texto || !senha) return alert("Preencha o Texto Original e a Senha.");
+        
         let resultado = "";
         if (metodo === "vigenere") resultado = vigenere(texto, senha, false);
         else if (metodo === "xor") resultado = xorBase64(texto, senha, false);
         else if (metodo.startsWith("aes")) resultado = await aesNativo(texto, senha, false, metodo);
+
         document.getElementById("txt_cripto").value = resultado;
+        
         const optText = document.getElementById("combo_metodo").options[document.getElementById("combo_metodo").selectedIndex].text;
         atualizarStatus(`Payload gerado via ${optText}.`, "success");
         atualizarContadores();
@@ -302,14 +369,18 @@
         let textoCripto = document.getElementById("txt_cripto").value.trim();
         let senha = document.getElementById("txt_senha").value.trim();
         let metodo = document.getElementById("combo_metodo").value;
+
         if (!textoCripto || !senha) return alert("Preencha o Texto Criptografado e a Senha.");
+
         let resultado = "";
         if (metodo === "vigenere") resultado = vigenere(textoCripto, senha, true);
         else if (metodo === "xor") resultado = xorBase64(textoCripto, senha, true);
         else if (metodo.startsWith("aes")) resultado = await aesNativo(textoCripto, senha, true, metodo);
+
         document.getElementById("txt_original").value = resultado;
+        
         if(resultado.startsWith("Erro")) atualizarStatus(resultado, "error");
-        else atualizarStatus("Payload descriptografado com sucesso.", "success");
+        else atualizarStatus("Payload descriptografado e verificado com sucesso.", "success");
         atualizarContadores();
     }
 
@@ -329,6 +400,7 @@
             const ndef = new NDEFReader();
             await ndef.scan();
             atualizarStatus("Aproxime a tag NFC do sensor...", "warning");
+
             ndef.onreading = event => {
                 for (const record of event.message.records) {
                     if (record.recordType === "text") {
@@ -346,7 +418,24 @@
         } catch (error) { atualizarStatus(`Erro de I/O: ${error.message}`, "error"); }
     }
 
-    async function travarTag() { alert("Proteção Ativa: Função desativada para evitar perda de hardware de testes."); }
+    // --- FUNÇÃO PREPARADA PARA DESBLOQUEIO FUTURO ---
+    async function travarTag() {
+        /*
+        // Para ativar isso no futuro, remova o atributo 'disabled' do botão HTML e descomente este bloco.
+        const confirmacao = confirm("ATENÇÃO: Este processo é irreversível!\n\nA tag ficará como Somente Leitura para sempre e nunca mais poderá ser editada ou apagada. Deseja continuar?");
+        if (!confirmacao) return;
+
+        try {
+            const ndef = new NDEFReader();
+            atualizarStatus("Aproxime a tag NFC para BLOQUEIO PERMANENTE...", "warning");
+            await ndef.makeReadOnly();
+            atualizarStatus("Segurança Máxima: Tag travada com sucesso e agora é Somente Leitura.", "success");
+        } catch (error) { 
+            atualizarStatus(`Falha ao travar tag: ${error.message}`, "error"); 
+        }
+        */
+        alert("Proteção de Desenvolvimento: A função de bloqueio permanente está desativada para evitar a perda das tags de teste.");
+    }
 </script>
 
 </body>
