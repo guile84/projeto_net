@@ -6,7 +6,7 @@
     <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate, max-age=0">
     <meta http-equiv="Pragma" content="no-cache">
     <meta name="referrer" content="no-referrer">
-    <title>NFC Security Core | Advanced</title>
+    <title>NFC Security Core | Advanced PRO</title>
     
     <style>
         :root {
@@ -160,13 +160,24 @@
             </div>
         </div>
         <div class="form-group">
-            <label>Motor Criptográfico</label>
+            <label>Algoritmo</label>
             <select id="combo_metodo">
-                <option value="vigenere">Vigenère</option>
-                <option value="xor">XOR + Base64</option>
-                <option value="aes-gcm" selected>AES-GCM 256-bit</option>
-                <option value="aes-ctr">AES-CTR 256-bit</option>
-                <option value="aes-cbc">AES-CBC 256-bit</option>
+                <optgroup label="Cifras Clássicas (Com Senha)">
+                    <option value="cesar">Cifra de César</option>
+                    <option value="vigenere">Vigenère</option>
+                </optgroup>
+                <optgroup label="Cifras Simétricas (Com Senha)">
+                    <option value="xor">XOR Puro + Base64</option>
+                    <option value="rc4">RC4 + Hexadecimal</option>
+                </optgroup>
+                <optgroup label="Padrão Python (Recomendado)">
+                    <option value="fernet" selected>AES (Padrão Python Fernet)</option>
+                </optgroup>
+                <optgroup label="Cifras Avançadas Padrão Web">
+                    <option value="aes-gcm">AES-256 GCM Nativo</option>
+                    <option value="aes-cbc">AES-256 CBC Nativo</option>
+                    <option value="aes-ctr">AES-256 CTR Nativo</option>
+                </optgroup>
             </select>
         </div>
     </div>
@@ -177,8 +188,8 @@
     </div>
 
     <div class="form-group">
-        <label>Payload Seguro (Memória da Tag)</label>
-        <textarea id="txt_cripto" rows="4" placeholder="Resultado encriptado..."></textarea>
+        <label>Texto Criptografado / Codificado</label>
+        <textarea id="txt_cripto" rows="4" placeholder="Resultado..."></textarea>
         
         <div class="textarea-footer">
             <button class="copy-btn" onclick="copiarTexto('txt_cripto', this)" title="Copiar texto">
@@ -198,51 +209,37 @@
             <button class="btn-green" id="btn_gravar" onclick="gravarTag()">Gravar Tag NFC</button>
             <button class="btn-blue" id="btn_ler" onclick="lerTag()">Ler Tag NFC</button>
         </div>
-        
-        <button class="btn-red" id="btn_travar" disabled title="Desativado por segurança no ambiente de desenvolvimento." onclick="travarTag()">
-            🔒 Travar Tag Permanente (Proteção Ativa)
-        </button>
     </div>
 </div>
 
 <script>
-    document.cookie = "teste=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+    // --- UTILITÁRIOS ---
+    function textToBytes(text) { return new TextEncoder().encode(text); }
+    function bytesToText(bytes) { return new TextDecoder().decode(bytes); }
+    function bytesToHex(bytes) { return Array.from(bytes).map(b => b.toString(16).padStart(2, '0')).join(''); }
+    function hexToBytes(hex) { 
+        let bytes = new Uint8Array(hex.length / 2);
+        for (let i = 0; i < hex.length; i += 2) bytes[i / 2] = parseInt(hex.substr(i, 2), 16);
+        return bytes;
+    }
 
     async function copiarTexto(idElemento, btnElemento) {
         const campoTexto = document.getElementById(idElemento);
-        const texto = campoTexto.value;
-        
-        if (!texto) {
-            atualizarStatus("Não há texto para copiar.", "warning");
-            return;
-        }
-
+        if (!campoTexto.value) return atualizarStatus("Não há texto para copiar.", "warning");
         try {
-            await navigator.clipboard.writeText(texto);
-            const conteudoOriginal = btnElemento.innerHTML;
+            await navigator.clipboard.writeText(campoTexto.value);
+            const original = btnElemento.innerHTML;
             btnElemento.innerHTML = `<svg viewBox="0 0 24 24" style="stroke: #10b981;"><polyline points="20 6 9 17 4 12"></polyline></svg> Copiado!`;
             btnElemento.style.color = "#10b981";
-            
-            setTimeout(() => {
-                btnElemento.innerHTML = conteudoOriginal;
-                btnElemento.style.color = "";
-            }, 2000);
-            
-        } catch (err) {
-            atualizarStatus("Falha ao copiar texto. Acesso negado.", "error");
-        }
+            setTimeout(() => { btnElemento.innerHTML = original; btnElemento.style.color = ""; }, 2000);
+        } catch (err) { atualizarStatus("Falha ao copiar.", "error"); }
     }
 
     function togglePassword() {
         const input = document.getElementById("txt_senha");
         const btn = document.getElementById("btn_toggle");
-        if (input.type === "password") {
-            input.type = "text";
-            btn.innerText = "🙈"; 
-        } else {
-            input.type = "password";
-            btn.innerText = "👁️";
-        }
+        if (input.type === "password") { input.type = "text"; btn.innerText = "🙈"; } 
+        else { input.type = "password"; btn.innerText = "👁️"; }
     }
 
     function atualizarStatus(mensagem, tipo = "default") {
@@ -266,48 +263,96 @@
         document.getElementById("unsupported").style.display = "block";
         document.getElementById("btn_gravar").disabled = true;
         document.getElementById("btn_ler").disabled = true;
-        // O botão de travar já vem com 'disabled' direto no HTML por segurança, 
-        // mas reforçamos aqui caso a lógica mude no futuro.
-        document.getElementById("btn_travar").disabled = true; 
-        atualizarStatus("Modo Lógico Habilitado. Hardware NFC Offline.", "warning");
     }
 
-    function vigenere(texto, chave, descriptografar = false) {
+    // =========================================================
+    // BIBLIOTECA DE ALGORITMOS
+    // =========================================================
+
+    // 1. Cifra de César
+    function algCesar(texto, chave, descriptografar = false) {
         if (!chave) return texto;
-        let resultado = "", indexChave = 0;
+        let shift = 0;
+        for(let i=0; i<chave.length; i++) shift += chave.charCodeAt(i);
+        shift = shift % 26;
+
+        let res = "";
         for (let i = 0; i < texto.length; i++) {
-            let charCode = texto.charCodeAt(i);
-            if (charCode >= 32 && charCode <= 126) {
-                let shift = chave.charCodeAt(indexChave % chave.length) % 95;
-                resultado += String.fromCharCode(descriptografar ? ((charCode - 32 - shift + 95) % 95) + 32 : ((charCode - 32 + shift) % 95) + 32);
-                indexChave++;
-            } else { resultado += texto.charAt(i); }
+            let c = texto.charCodeAt(i);
+            if (c >= 65 && c <= 90) res += String.fromCharCode(descriptografar ? ((c - 65 - shift + 26) % 26) + 65 : ((c - 65 + shift) % 26) + 65);
+            else if (c >= 97 && c <= 122) res += String.fromCharCode(descriptografar ? ((c - 97 - shift + 26) % 26) + 97 : ((c - 97 + shift) % 26) + 97);
+            else res += texto.charAt(i);
         }
-        return resultado;
+        return res;
     }
 
-    function xorBase64(texto, chave, descriptografar = false) {
+    // 2. Vigenère
+    function algVigenere(texto, chave, descriptografar = false) {
+        if (!chave) return texto;
+        let res = "", idx = 0;
+        for (let i = 0; i < texto.length; i++) {
+            let c = texto.charCodeAt(i);
+            if (c >= 32 && c <= 126) {
+                let shift = chave.charCodeAt(idx % chave.length) % 95;
+                if (descriptografar) res += String.fromCharCode(((c - 32 - shift + 95) % 95) + 32);
+                else res += String.fromCharCode(((c - 32 + shift) % 95) + 32);
+                idx++;
+            } else res += texto.charAt(i);
+        }
+        return res;
+    }
+
+    // 3. XOR
+    function algXor(texto, chave, descriptografar = false) {
         if (!chave) chave = "padrao";
+        let bytesChave = textToBytes(chave);
         if (descriptografar) {
             try {
-                let decodificado = atob(texto), resultado = "";
-                for (let i = 0; i < decodificado.length; i++) resultado += String.fromCharCode(decodificado.charCodeAt(i) ^ chave.charCodeAt(i % chave.length));
-                return decodeURIComponent(escape(resultado));
-            } catch (e) { return "Erro: Base64 corrompido."; }
+                let bytesTexto = Uint8Array.from(atob(texto), c => c.charCodeAt(0));
+                let res = new Uint8Array(bytesTexto.length);
+                for (let i = 0; i < bytesTexto.length; i++) res[i] = bytesTexto[i] ^ bytesChave[i % bytesChave.length];
+                return bytesToText(res);
+            } catch (e) { return "Erro: XOR/Base64 corrompido."; }
         } else {
-            let utf8texto = unescape(encodeURIComponent(texto)), resultado = "";
-            for (let i = 0; i < utf8texto.length; i++) resultado += String.fromCharCode(utf8texto.charCodeAt(i) ^ chave.charCodeAt(i % chave.length));
-            return btoa(resultado);
+            let bytesTexto = textToBytes(texto);
+            let res = new Uint8Array(bytesTexto.length);
+            for (let i = 0; i < bytesTexto.length; i++) res[i] = bytesTexto[i] ^ bytesChave[i % bytesChave.length];
+            return btoa(String.fromCharCode(...res));
         }
     }
 
-    async function aesNativo(texto, senha, descriptografar = false, mode = 'aes-gcm') {
+    // 4. RC4
+    function algRc4(texto, chave, descriptografar = false) {
+        if (!chave) chave = "padrao";
+        let bytesTexto = descriptografar ? hexToBytes(texto) : textToBytes(texto);
+        if (descriptografar && bytesTexto.length === 0 && texto.length > 0) return "Erro: RC4 Hex inválido.";
+
+        let S = Array.from({length: 256}, (_, i) => i), j = 0;
+        for (let i = 0; i < 256; i++) {
+            j = (j + S[i] + chave.charCodeAt(i % chave.length)) % 256;
+            [S[i], S[j]] = [S[j], S[i]];
+        }
+        
+        let i = 0; j = 0;
+        let res = new Uint8Array(bytesTexto.length);
+        for (let y = 0; y < bytesTexto.length; y++) {
+            i = (i + 1) % 256;
+            j = (j + S[i]) % 256;
+            [S[i], S[j]] = [S[j], S[i]];
+            res[y] = bytesTexto[y] ^ S[(S[i] + S[j]) % 256];
+        }
+        
+        if (descriptografar) { try { return bytesToText(res); } catch(e) { return "Erro: RC4 dados corrompidos."; } }
+        return bytesToHex(res);
+    }
+
+    // 5. AES GCM/CBC/CTR padrão WebCrypto
+    async function algAes(texto, senha, descriptografar = false, mode = 'AES-GCM') {
         const enc = new TextEncoder();
         const hash = await crypto.subtle.digest('SHA-256', enc.encode(senha));
-        let algName = mode.toUpperCase();
-        const key = await crypto.subtle.importKey('raw', hash, {name: algName}, false, ['encrypt', 'decrypt']);
+        const key = await crypto.subtle.importKey('raw', hash, {name: mode}, false, ['encrypt', 'decrypt']);
 
-        let ivLength = (algName === 'AES-GCM') ? 12 : 16;
+        let ivLength = (mode === 'AES-GCM') ? 12 : 16;
 
         if (descriptografar) {
             try {
@@ -318,75 +363,145 @@
                 const iv = combined.slice(0, ivLength);
                 const ciphertext = combined.slice(ivLength);
 
-                let params = { name: algName };
-                if (algName === 'AES-CTR') { params.counter = iv; params.length = 64; }
+                let params = { name: mode };
+                if (mode === 'AES-CTR') { params.counter = iv; params.length = 64; }
                 else { params.iv = iv; }
 
                 const decrypted = await crypto.subtle.decrypt(params, key, ciphertext);
                 return new TextDecoder().decode(decrypted);
-            } catch (e) {
-                return `Erro ${algName}: Falha de autenticidade ou chave incorreta.`;
-            }
+            } catch (e) { return `Erro ${mode}: Senha incorreta ou dados corrompidos.`; }
         } else {
             const iv = crypto.getRandomValues(new Uint8Array(ivLength));
-            
-            let params = { name: algName };
-            if (algName === 'AES-CTR') { params.counter = iv; params.length = 64; }
+            let params = { name: mode };
+            if (mode === 'AES-CTR') { params.counter = iv; params.length = 64; }
             else { params.iv = iv; }
 
             const ciphertext = await crypto.subtle.encrypt(params, key, enc.encode(texto));
-            
             const combined = new Uint8Array(iv.length + ciphertext.byteLength);
             combined.set(iv, 0);
             combined.set(new Uint8Array(ciphertext), iv.length);
             
-            let bin = "";
-            for (let i = 0; i < combined.byteLength; i++) bin += String.fromCharCode(combined[i]);
-            return btoa(bin);
+            return btoa(String.fromCharCode(...combined));
         }
     }
 
-    async function criptografar() {
-        let texto = document.getElementById("txt_original").value.trim();
+    // 6. FERNET (Compatibilidade 100% com biblioteca Cryptography do Python)
+    function base64urlEncode(buffer) {
+        let b64 = btoa(String.fromCharCode(...new Uint8Array(buffer)));
+        return b64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
+    }
+
+    function base64urlDecode(str) {
+        let b64 = str.replace(/-/g, '+').replace(/_/g, '/');
+        while (b64.length % 4) b64 += '=';
+        return Uint8Array.from(atob(b64), c => c.charCodeAt(0));
+    }
+
+    async function algFernet(texto, senha, descriptografar = false) {
+        const enc = new TextEncoder();
+        // Recria o hash SHA256 que seu script Python faz
+        const keyHash = await crypto.subtle.digest('SHA-256', enc.encode(senha));
+        const keyBytes = new Uint8Array(keyHash);
+        
+        // Fernet divide a chave de 32 bytes: metade para assinatura (HMAC), metade pra Cifra (AES)
+        const signKeyBytes = keyBytes.slice(0, 16);
+        const encKeyBytes = keyBytes.slice(16, 32);
+        
+        const aesKey = await crypto.subtle.importKey('raw', encKeyBytes, {name: 'AES-CBC'}, false, ['encrypt', 'decrypt']);
+        const hmacKey = await crypto.subtle.importKey('raw', signKeyBytes, {name: 'HMAC', hash: 'SHA-256'}, false, ['sign', 'verify']);
+
+        if (descriptografar) {
+            try {
+                const data = base64urlDecode(texto);
+                if (data[0] !== 0x80) throw new Error("Versão de Fernet incorreta.");
+                
+                const iv = data.slice(9, 25);
+                const ciphertext = data.slice(25, data.length - 32);
+                const expectedHmac = data.slice(data.length - 32);
+                const payloadToSign = data.slice(0, data.length - 32);
+                
+                // Valida o HMAC (Autenticação do Python)
+                const isValid = await crypto.subtle.verify('HMAC', hmacKey, expectedHmac, payloadToSign);
+                if (!isValid) throw new Error("Assinatura inválida! Alguém tentou alterar a tag.");
+
+                const decrypted = await crypto.subtle.decrypt({name: 'AES-CBC', iv: iv}, aesKey, ciphertext);
+                return new TextDecoder().decode(decrypted);
+            } catch (e) {
+                return "Erro AES Fernet (Python): Senha incorreta ou dados adulterados.";
+            }
+        } else {
+            // Gera um Token compatível com o Python
+            const iv = crypto.getRandomValues(new Uint8Array(16));
+            const ciphertextBuffer = await crypto.subtle.encrypt({name: 'AES-CBC', iv: iv}, aesKey, enc.encode(texto));
+            const ciphertext = new Uint8Array(ciphertextBuffer);
+            
+            const timestamp = Math.floor(Date.now() / 1000);
+            const tsBytes = new Uint8Array(8);
+            let tempTs = timestamp;
+            for (let i = 7; i >= 0; i--) { tsBytes[i] = tempTs & 0xff; tempTs = Math.floor(tempTs / 256); }
+            
+            const payload = new Uint8Array(1 + 8 + 16 + ciphertext.length);
+            payload[0] = 0x80;
+            payload.set(tsBytes, 1);
+            payload.set(iv, 9);
+            payload.set(ciphertext, 25);
+            
+            const signatureBuffer = await crypto.subtle.sign('HMAC', hmacKey, payload);
+            const signature = new Uint8Array(signatureBuffer);
+            
+            const token = new Uint8Array(payload.length + signature.length);
+            token.set(payload, 0);
+            token.set(signature, payload.length);
+            
+            return base64urlEncode(token);
+        }
+    }
+
+    // =========================================================
+    // ROTEADORES DE INTERFACE
+    // =========================================================
+
+    async function processarAcao(descriptografar) {
+        let campoEntrada = descriptografar ? "txt_cripto" : "txt_original";
+        let campoSaida = descriptografar ? "txt_original" : "txt_cripto";
+        
+        let texto = document.getElementById(campoEntrada).value.trim();
         let senha = document.getElementById("txt_senha").value.trim();
         let metodo = document.getElementById("combo_metodo").value;
 
-        if (!texto || !senha) return alert("Preencha o Texto Original e a Senha.");
+        if (!texto || !senha) return alert("Preencha todos os campos obrigatórios (Texto e Senha).");
         
         let resultado = "";
-        if (metodo === "vigenere") resultado = vigenere(texto, senha, false);
-        else if (metodo === "xor") resultado = xorBase64(texto, senha, false);
-        else if (metodo.startsWith("aes")) resultado = await aesNativo(texto, senha, false, metodo);
-
-        document.getElementById("txt_cripto").value = resultado;
         
-        const optText = document.getElementById("combo_metodo").options[document.getElementById("combo_metodo").selectedIndex].text;
-        atualizarStatus(`Payload gerado via ${optText}.`, "success");
+        if (metodo === "cesar") resultado = algCesar(texto, senha, descriptografar);
+        else if (metodo === "vigenere") resultado = algVigenere(texto, senha, descriptografar);
+        else if (metodo === "xor") resultado = algXor(texto, senha, descriptografar);
+        else if (metodo === "rc4") resultado = algRc4(texto, senha, descriptografar);
+        else if (metodo === "fernet") resultado = await algFernet(texto, senha, descriptografar);
+        else if (metodo === "aes-gcm") resultado = await algAes(texto, senha, descriptografar, 'AES-GCM');
+        else if (metodo === "aes-cbc") resultado = await algAes(texto, senha, descriptografar, 'AES-CBC');
+        else if (metodo === "aes-ctr") resultado = await algAes(texto, senha, descriptografar, 'AES-CTR');
+
+        document.getElementById(campoSaida).value = resultado;
+        
+        if (resultado.startsWith("Erro")) atualizarStatus(resultado, "error");
+        else {
+            const optText = document.getElementById("combo_metodo").options[document.getElementById("combo_metodo").selectedIndex].text;
+            atualizarStatus(`Operação (${optText}) concluída com sucesso.`, "success");
+        }
         atualizarContadores();
     }
 
-    async function descriptografar() {
-        let textoCripto = document.getElementById("txt_cripto").value.trim();
-        let senha = document.getElementById("txt_senha").value.trim();
-        let metodo = document.getElementById("combo_metodo").value;
+    function criptografar() { processarAcao(false); }
+    function descriptografar() { processarAcao(true); }
 
-        if (!textoCripto || !senha) return alert("Preencha o Texto Criptografado e a Senha.");
-
-        let resultado = "";
-        if (metodo === "vigenere") resultado = vigenere(textoCripto, senha, true);
-        else if (metodo === "xor") resultado = xorBase64(textoCripto, senha, true);
-        else if (metodo.startsWith("aes")) resultado = await aesNativo(textoCripto, senha, true, metodo);
-
-        document.getElementById("txt_original").value = resultado;
-        
-        if(resultado.startsWith("Erro")) atualizarStatus(resultado, "error");
-        else atualizarStatus("Payload descriptografado e verificado com sucesso.", "success");
-        atualizarContadores();
-    }
+    // =========================================================
+    // HARDWARE NFC
+    // =========================================================
 
     async function gravarTag() {
         let texto = document.getElementById("txt_cripto").value.trim();
-        if (!texto) return alert("Não há texto criptografado para gravar.");
+        if (!texto) return alert("Não há texto processado para gravar na Tag.");
         try {
             const ndef = new NDEFReader();
             atualizarStatus("Aproxime a tag NFC do sensor...", "warning");
@@ -407,7 +522,7 @@
                         const textoLido = new TextDecoder(record.encoding).decode(record.data);
                         document.getElementById("txt_cripto").value = textoLido;
                         document.getElementById("txt_original").value = ""; 
-                        atualizarStatus("Tag lida com sucesso. Requer descriptografia.", "success");
+                        atualizarStatus("Tag lida com sucesso. Requer decodificação.", "success");
                         atualizarContadores();
                         return;
                     }
@@ -416,25 +531,6 @@
             };
             ndef.onreadingerror = () => { atualizarStatus("Corrupção de dados ou leitura interrompida.", "error"); };
         } catch (error) { atualizarStatus(`Erro de I/O: ${error.message}`, "error"); }
-    }
-
-    // --- FUNÇÃO PREPARADA PARA DESBLOQUEIO FUTURO ---
-    async function travarTag() {
-        /*
-        // Para ativar isso no futuro, remova o atributo 'disabled' do botão HTML e descomente este bloco.
-        const confirmacao = confirm("ATENÇÃO: Este processo é irreversível!\n\nA tag ficará como Somente Leitura para sempre e nunca mais poderá ser editada ou apagada. Deseja continuar?");
-        if (!confirmacao) return;
-
-        try {
-            const ndef = new NDEFReader();
-            atualizarStatus("Aproxime a tag NFC para BLOQUEIO PERMANENTE...", "warning");
-            await ndef.makeReadOnly();
-            atualizarStatus("Segurança Máxima: Tag travada com sucesso e agora é Somente Leitura.", "success");
-        } catch (error) { 
-            atualizarStatus(`Falha ao travar tag: ${error.message}`, "error"); 
-        }
-        */
-        alert("Proteção de Desenvolvimento: A função de bloqueio permanente está desativada para evitar a perda das tags de teste.");
     }
 </script>
 
